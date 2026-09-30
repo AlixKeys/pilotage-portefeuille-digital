@@ -10,11 +10,19 @@ ctx = ui.contexte()
 ev, data, seuils = ctx["ev"], ctx["data"], ctx["seuils"]
 j = data["jalons"].merge(ev[["code", "produit", "statut"]].rename(columns={"statut": "statut_produit"}), on="code")
 
+# Distinguer l'historique (jalons terminés en retard) de ce qu'il reste à piloter
+termine = j["statut"].str.strip().str.lower() == "terminé"
 en_retard = j[j["retard_j"] > 0]
+termines_retard = j[termine & (j["retard_j"] > 0)]
+restants = j[~termine]
+restants_retard = restants[restants["retard_j"] > 0]
 crit = j[j["critique"] & (j["retard_j"] > seuils.jalon_rouge)]
 ui.cartes([
-    ("Jalons suivis", str(len(j)), f"{int((j['statut'] == 'Terminé').sum())} terminés"),
-    ("Jalons en retard", str(len(en_retard)), "date réelle ou estimée > date prévue", ui.COULEURS["Orange"]),
+    ("Jalons suivis", str(len(j)), f"{int(termine.sum())} terminés · {len(restants)} restants"),
+    ("Terminés, livrés en retard", f"{len(termines_retard)} / {int(termine.sum())}",
+     "historique : date réelle > date prévue", ui.GRIS),
+    ("Restants qui glissent", f"{len(restants_retard)} / {len(restants)}",
+     "à piloter : date estimée > date prévue", ui.COULEURS["Orange"]),
     ("Jalons critiques > seuil", str(len(crit)), f"retard > {seuils.jalon_rouge} jours", ui.COULEURS["Rouge"]),
     ("Retard moyen des lancements", f"{D.fmt_nb(j[j['jalon'] == 'Lancement']['retard_j'].clip(lower=0).mean())} j",
      "sur les 10 produits"),
@@ -63,8 +71,13 @@ st.caption(f"Le retard s'accumule surtout à l'étape **{glisse.idxmax()}** "
 
 # --------------------------------------------------------- Liste des jalons en retard
 st.markdown("#### Jalons en retard")
-seul_crit = st.toggle("Afficher seulement les jalons critiques", value=False)
-t = en_retard[en_retard["critique"]] if seul_crit else en_retard
+f1, f2 = st.columns([1.4, 1])
+vue = f1.radio("Afficher", ["À piloter (non terminés)", "Terminés en retard (historique)", "Tous"],
+               horizontal=True, label_visibility="collapsed")
+seul_crit = f2.toggle("Seulement les jalons critiques", value=False)
+t = {"À piloter (non terminés)": restants_retard,
+     "Terminés en retard (historique)": termines_retard}.get(vue, en_retard)
+t = t[t["critique"]] if seul_crit else t
 st.dataframe(
     t.sort_values("retard_j", ascending=False)[
         ["id", "produit", "jalon", "prevue", "reelle", "retard_j", "statut", "critique", "statut_produit"]]
