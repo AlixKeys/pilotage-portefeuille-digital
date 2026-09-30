@@ -15,9 +15,10 @@ CSS = """
 <style>
 .block-container {padding-top: 2rem; padding-bottom: 3rem; max-width: 1300px;}
 [data-testid="stMetricValue"] {font-size: 1.6rem;}
-.carte {border-radius: 10px; padding: 14px 16px; background: var(--carte-bg, #F4F6FA);
-        border-left: 5px solid #1F3864; height: 100%;}
-.carte .lib {font-size: .8rem; color: #5B6475; text-transform: uppercase; letter-spacing: .03em;}
+.carte {border-radius: 10px; padding: 14px 16px; background: #F4F6FA;
+        border-left: 5px solid #1F3864; min-height: 150px; box-sizing: border-box;}
+.carte .lib {font-size: .8rem; color: #5B6475; text-transform: uppercase; letter-spacing: .03em;
+             line-height: 1.3; min-height: 2.6em;}
 .carte .val {font-size: 1.45rem; white-space: nowrap; font-weight: 700; color: #1F3864; line-height: 1.3;}
 .carte .sous {font-size: .8rem; color: #5B6475;}
 .badge {display:inline-block; padding: 2px 10px; border-radius: 12px; color: white;
